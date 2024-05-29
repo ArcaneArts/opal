@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:mesh_gradient/mesh_gradient.dart';
 import 'package:opal/util/controller.dart';
 import 'package:tinycolor2/tinycolor2.dart';
+import 'package:toxic/extensions/future.dart';
 
 class OpalBackground extends StatelessWidget {
   final Opal controller;
@@ -15,12 +17,54 @@ class OpalBackground extends StatelessWidget {
       opacity: controller.backgroundOpacity.value,
       duration: const Duration(seconds: 1),
       curve: Curves.easeOutCirc,
-      child: UnicornVomit(
-        dark: controller.isDark(),
-        points: 3,
-        blendAmount: controller.themeColorMixture.value,
-        blendColor: controller.theme.colorScheme.primary,
-      ));
+      child: true
+          ? controller.shader.build((shader) {
+              return CustomPaint(
+                painter: ShaderPaint(
+                  shader: shader,
+                  opacity: controller.backgroundOpacity.value,
+                  time: DateTime.now().millisecondsSinceEpoch / 1000.0,
+                  aspectRatio: 1,
+                ),
+                size: MediaQuery.of(context).size,
+              );
+            })
+          : UnicornVomit(
+              dark: controller.isDark(),
+              points: 3,
+              blendAmount: controller.themeColorMixture.value,
+              blendColor: controller.theme.colorScheme.primary,
+            ));
+}
+
+class ShaderPaint extends CustomPainter {
+  final FragmentShader shader;
+  final double opacity;
+  final double time;
+  final double aspectRatio;
+  final Paint _paint = Paint();
+
+  ShaderPaint({
+    required this.shader,
+    required this.opacity,
+    required this.time,
+    required this.aspectRatio,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    shader.setFloat(0, size.width);
+    shader.setFloat(1, size.height);
+    shader.setFloat(2, time);
+    _paint.shader = shader;
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      _paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
 class UnicornVomit extends StatefulWidget {

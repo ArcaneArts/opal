@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:opal/widget/opal_wrapper.dart';
@@ -13,6 +15,7 @@ class Opal {
   late ValueNotifier<double> backgroundOpacity;
   late ValueNotifier<double> themeColorMixture;
   late BehaviorSubject<String> _backgroundSeed;
+  late Future<FragmentProgram> program;
 
   Opal({
     required ThemeData lightThemeData,
@@ -32,7 +35,11 @@ class Opal {
     this.backgroundOpacity = ValueNotifier(backgroundOpacity)
       ..addListener(listener);
     _backgroundSeed = BehaviorSubject.seeded("/");
+    program = FragmentProgram.fromAsset("packages/opal/shader/opal.frag");
   }
+
+  Future<FragmentShader> get shader =>
+      program.then((value) => value.fragmentShader());
 
   static Opal of(BuildContext context) => OpalWrapper.of(context).controller;
 
